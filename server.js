@@ -28,6 +28,9 @@ const routes = {
   },
   '/articles/:id/downvote': {
     'PUT': downvoteArticle
+  },
+  '/comments': {
+    'POST': createComment
   }
 };
 
@@ -242,6 +245,32 @@ function downvote(item, username) {
   return item;
 }
 
+function createComment(url, request) {
+  const requestComment = request.body && request.body.comment;
+  const response = {};
+
+  if (requestComment && requestComment.body &&
+    requestComment.articleId && database.articles[requestComment.articleId] &&
+    requestComment.username && database.users[requestComment.username]) {
+    const comment = {
+      id: database.nextCommentId++,
+      body: requestComment.body,
+      username: requestComment.username,
+      articleId: requestComment.articleId,
+      upvotedBy: [],
+      downvotedBy: []
+    };
+    database.comments[comment.id] = comment;
+    database.articles[comment.articleId].commentIds.push(comment.id);
+    database.users[comment.username].commentIds.push(comment.id);
+
+    response.body = { comment: comment };
+    response.status = 201;
+  } else {
+    response.status = 400;
+  }
+  return response;
+}
 // Write all code above this line.
 
 const http = require('http');
